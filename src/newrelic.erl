@@ -67,6 +67,19 @@ push_metric_data(Collector, RunId, MetricData) ->
             now_to_seconds(),
             MetricData],
 
+    push_data(Url, Data).
+
+push_error_data(Collector, RunId, ErrorData) ->
+    Url = url(Collector, [{method, error_data},
+                          {run_id, RunId}]),
+
+    Data = [RunId,
+            ErrorData],
+
+	push_data(Url, Data).
+
+
+push_data(Url, Data) ->
     case request(Url, jiffy:encode(Data)) of
         {ok, {{200, "OK"}, _, Response}} ->
             {Struct} = jiffy:decode(Response),
@@ -79,7 +92,6 @@ push_metric_data(Collector, RunId, MetricData) ->
         {ok, {{503, _}, _, _}} ->
             throw(newrelic_down)
     end.
-
 
 
 %%
@@ -220,4 +232,38 @@ sample_data() ->
        2.005380868911743,
        4.021552429397218]]
     ].
+
+sample_error_data() ->
+	[[
+	    now_to_seconds(),
+	    <<"WebTransaction/Uri/testUrl">>,
+	    <<"error">>,
+	    <<"RuntimeError">>,
+	    {
+	        [
+	          {<<"parameter_groups">>,
+	            {[{<<"Transaction metrics">>,
+	                  {[{<<"Thread/Concurrency">>,<<"1.0146">>}]}
+	                },
+	                {<<"Response properties">>,
+	                  {[{<<"CONTENT_LENGTH">>,<<"12">>},
+	                      {<<"STATUS">>,<<"200">>}]}
+	                }
+	              ]}
+	          },
+	          {<<"stack_trace">>,
+	            [
+	              <<"Traceback (most recent call last):\n">>,
+	              <<"  Stacktrace line 1">>,
+	              <<"  Stacktrace line 2">>,
+	              <<"  Stacktrace line 3">>,
+	              <<"  Stacktrace line 4">>,
+	              <<"RuntimeError: error\n">>
+	            ]
+	          },
+	          {<<"request_params">>,{[{<<"key">>,[<<"value">>]}]}},
+	          {<<"request_uri">>,<<"/testUrl">>}
+	        ]
+	     }
+	]].
 
