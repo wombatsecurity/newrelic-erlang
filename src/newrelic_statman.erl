@@ -14,15 +14,46 @@ poll() ->
     Ms = lists:filter(
            fun (M) -> M =/= [] end,
            lists:foldl(fun (M, Acc) ->
-                               transform(M) ++ Acc
+                               transform_histogram(M) ++ Acc
                        end, [], Histograms)),
 
-    [webtransaction_total(Ms), db_total(Ms)] ++ Ms.
+    Counters = lists:filter(
+                   fun (Metric) ->
+                           proplists:get_value(type, Metric) =:= counter andalso
+                               (not is_list(proplists:get_value(node, Metric)))
+                   end,
+                   Metrics),
+
+    Errs = lists:flatmap(
+               fun (Metric) ->
+                       transform_counter(Metric)
+               end,
+               Counters),
+
+    {[webtransaction_total(Ms), db_total(Ms) | Ms], Errs}.
 
 
+transform_counter(Metric) ->
+    case proplists:get_value(key, Metric) of
+        {Scope, {error, {Type, Message}}} when is_binary(Scope) ->
+            {MegaSecs, Secs, MicroSecs} = os:timestamp(),
+            Error = [MegaSecs * 1000000 + Secs + MicroSecs / 1000000,
+                     scope2bin(Scope),
+                     to_bin(Message),
+                     to_bin(Type),
+                     {[{<<"parameter_groups">>,{[]}},
+                        {<<"stack_trace">>, []},
+                        {<<"request_params">>, {[]}},
+                        {<<"request_uri">>, Scope}
+                      ]}],
+            lists:duplicate(proplists:get_value(value, Metric), Error);
+
+        _ ->
+            []
+    end.
 
 
-transform(Metric) ->
+transform_histogram(Metric) ->
     Summary = statman_histogram:summary(proplists:get_value(value, Metric)),
     Data = [proplists:get_value(observations, Summary),
             proplists:get_value(sum, Summary) / 1000000,

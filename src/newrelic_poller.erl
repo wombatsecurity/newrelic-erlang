@@ -41,8 +41,8 @@ handle_info(poll, State) ->
         {'EXIT', Error} ->
             error_logger:warning_msg("newrelic_poller: polling failed: ~p~n", [Error]),
             ok;
-        Metrics ->
-            case catch newrelic:push(Hostname, Metrics) of
+        {Metrics, Errors} ->
+            case catch newrelic:push(Hostname, Metrics, Errors) of
                 ok ->
                     ok;
                 newrelic_down ->
