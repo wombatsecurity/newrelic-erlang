@@ -12,10 +12,15 @@
 
 %% @doc: Connects to New Relic and sends the hopefully correctly
 %% formatted data and registers it under the given hostname.
-push(Hostname, Data) ->
+push(Hostname, Data, Errors) ->
     Collector = get_redirect_host(),
     RunId = connect(Collector, Hostname),
-    push_metric_data(Collector, RunId, Data).
+    case push_metric_data(Collector, RunId, Data) of
+        ok ->
+            push_error_data(Collector, RunId, Errors);
+        Error ->
+            Error
+    end.
 
 
 %%

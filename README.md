@@ -37,4 +37,6 @@ your keys, you can use New Relic "for free".
    inside a web transaction, will show up in the "Performance
    breakdown" and "External services"
  * `{foo, bar}` - Background task
+ * `{<<"/hello/world">>, {error, {type, message}}}` - Error, counters with keys
+   like this will show up in under "Errors"
 
