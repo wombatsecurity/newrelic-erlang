@@ -1,5 +1,10 @@
 -module(newrelic).
--compile([export_all]).
+
+-export([push/3, push_metric_data/3, push_error_data/3,
+         connect/2, get_redirect_host/0]).
+
+% Exported for testing
+-export([sample_data/0, sample_error_data/0]).
 
 -define(BASE_URL, "http://~s/agent_listener/invoke_raw_method?").
 
@@ -35,6 +40,8 @@ get_redirect_host() ->
             {Struct} = jiffy:decode(Body),
             binary_to_list(proplists:get_value(<<"return_value">>, Struct));
         {ok, {{503, _}, _, _}} ->
+            throw(newrelic_down);
+        {error, timeout} ->
             throw(newrelic_down)
     end.
 
@@ -59,6 +66,8 @@ connect(Collector, Hostname) ->
             {Return} = proplists:get_value(<<"return_value">>, Struct),
             proplists:get_value(<<"agent_run_id">>, Return);
         {ok, {{503, _}, _, _}} ->
+            throw(newrelic_down);
+        {error, timeout} ->
             throw(newrelic_down)
     end.
 
@@ -95,6 +104,8 @@ push_data(Url, Data) ->
                     {error, Exception}
             end;
         {ok, {{503, _}, _, _}} ->
+            throw(newrelic_down);
+        {error, timeout} ->
             throw(newrelic_down)
     end.
 
@@ -124,19 +135,16 @@ request(Url) ->
     request(Url, <<"[]">>).
 
 request(Url, Body) ->
-    lhttpc:request(Url, post, [{"Content-Encoding", "identity"}],
-                   Body, 5000).
+    lhttpc:request(Url, post, [{"Content-Encoding", "identity"}], Body, 5000).
 
 
 url(Args) ->
     url("collector.newrelic.com", Args).
 
 url(Host, Args) ->
-    BaseArgs = [{protocol_version, 9},
+    BaseArgs = [{protocol_version, 10},
                 {license_key,  license_key()},
                 {marshal_format, json}],
-
-
     lists:flatten([io_lib:format(?BASE_URL, [Host]), urljoin(Args ++ BaseArgs)]).
 
 urljoin([H | T]) ->
@@ -150,7 +158,6 @@ url_var({Key, Value}) -> [to_list(Key), "=", to_list(Value)].
 to_list(Atom) when is_atom(Atom) -> atom_to_list(Atom);
 to_list(List) when is_list(List)-> List;
 to_list(Int) when is_integer(Int) -> integer_to_list(Int).
-
 
 
 
