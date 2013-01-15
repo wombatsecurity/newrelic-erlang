@@ -30,7 +30,7 @@ poll() ->
                end,
                Counters),
 
-    {[webtransaction_total(Ms), db_total(Ms) | Ms], Errs}.
+    {[webtransaction_total(Ms), db_total(Ms), errors_total(Errs) | Ms], Errs}.
 
 
 transform_counter(Metric) ->
@@ -149,6 +149,13 @@ db_total(Ms) ->
     [{[{name, <<"Database/all">>},
        {scope, <<"">>}]},
      [N, Sum, Sum, Min, Max, Sum2]].
+
+
+errors_total(Errors) ->
+    [{[{name, <<"Errors/all">>},
+       {scope, <<"">>}]},
+     [length(Errors), 0.0, 0.0, 0.0, 0.0, 0.0]].
+
 
 pluck(_, _, []) ->
     [0];
