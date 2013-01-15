@@ -1,6 +1,6 @@
 -module(newrelic).
 
--export([push/2, push_metric_data/3, push_error_data/3,
+-export([push/3, push_metric_data/3, push_error_data/3,
          connect/2, get_redirect_host/0]).
 
 % Exported for testing
@@ -142,7 +142,7 @@ url(Args) ->
     url("collector.newrelic.com", Args).
 
 url(Host, Args) ->
-    BaseArgs = [{protocol_version, 9},
+    BaseArgs = [{protocol_version, 10},
                 {license_key,  license_key()},
                 {marshal_format, json}],
     lists:flatten([io_lib:format(?BASE_URL, [Host]), urljoin(Args ++ BaseArgs)]).
