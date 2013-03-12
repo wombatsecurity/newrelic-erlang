@@ -7,7 +7,7 @@ poll() ->
     Ms = lists:filter(
            fun (M) -> M =/= [] end,
            lists:foldl(fun (M, Acc) ->
-                               transform_histogram(M) ++ Acc
+                               transform_metric(M) ++ Acc
                        end, [], Metrics)),
 
     Counters = lists:filter(
