@@ -64,11 +64,15 @@ transform_metric(Metric, _Ignore = false) ->
 transform_counter(Metric) ->
     case proplists:get_value(key, Metric) of
         {Scope, {error, {_Type, _Message}}} when is_binary(Scope) ->
-            [[{[{name, <<"Errors/WebTransaction/Uri", Scope/binary>>},
-                {scope, <<"">>}]},
-              [proplists:get_value(value, Metric), 0.0, 0.0, 0.0, 0.0, 0.0]
-             ]];
-
+            case proplists:get_value(value, Metric) of
+                Errors when Errors > 0 ->
+                    [[{[{name, <<"Errors/WebTransaction/Uri", Scope/binary>>},
+                        {scope, <<"">>}]},
+                      [Errors, 0.0, 0.0, 0.0, 0.0, 0.0]
+                     ]];
+                _ ->
+                    []
+            end;
         _ ->
             []
     end.
