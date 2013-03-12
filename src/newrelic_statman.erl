@@ -3,19 +3,12 @@
 
 poll() ->
     {ok, Metrics} = statman_aggregator:get_window(60),
-    Histograms = lists:filter(
-                   fun (Metric) ->
-                           proplists:get_value(type, Metric) =:= histogram andalso
-                               (not is_list(proplists:get_value(node, Metric))) andalso
-                               proplists:get_value(value, Metric) =/= []
-                   end,
-                   Metrics),
 
     Ms = lists:filter(
            fun (M) -> M =/= [] end,
            lists:foldl(fun (M, Acc) ->
                                transform_histogram(M) ++ Acc
-                       end, [], Histograms)),
+                       end, [], Metrics)),
 
     Counters = lists:filter(
                    fun (Metric) ->
@@ -23,17 +16,16 @@ poll() ->
                                (not is_list(proplists:get_value(node, Metric)))
                    end,
                    Metrics),
-
     Errs = lists:flatmap(
                fun (Metric) ->
-                       transform_counter(Metric)
+                       transform_error_counter(Metric)
                end,
                Counters),
 
-    {[webtransaction_total(Ms), db_total(Ms), errors_total(Errs) | Ms], Errs}.
+    {[webtransaction_total(Ms), db_total(Ms) | errors_total(Errs) ++ Ms], Errs}.
 
 
-transform_counter(Metric) ->
+transform_error_counter(Metric) ->
     case proplists:get_value(key, Metric) of
         {Scope, {error, {Type, Message}}} when is_binary(Scope) ->
             {MegaSecs, Secs, MicroSecs} = os:timestamp(),
@@ -52,6 +44,34 @@ transform_counter(Metric) ->
             []
     end.
 
+
+transform_metric(Metric) ->
+    transform_metric(Metric, is_list(proplists:get_value(node, Metric))).
+
+transform_metric(_Metric, _Ignore = true) ->
+    [];
+transform_metric(Metric, _Ignore = false) ->
+    case proplists:get_value(type, Metric) of
+        histogram ->
+            case proplists:get_value(value, Metric) =/= [] of
+                true  -> transform_histogram(Metric);
+                false -> []
+            end;
+        counter   -> transform_counter(Metric);
+        _         -> []
+    end.
+
+transform_counter(Metric) ->
+    case proplists:get_value(key, Metric) of
+        {Scope, {error, {_Type, _Message}}} when is_binary(Scope) ->
+            [[{[{name, <<"Errors/WebTransaction/Uri", Scope/binary>>},
+                {scope, <<"">>}]},
+              [proplists:get_value(value, Metric), 0.0, 0.0, 0.0, 0.0, 0.0]
+             ]];
+
+        _ ->
+            []
+    end.
 
 transform_histogram(Metric) ->
     Summary = statman_histogram:summary(proplists:get_value(value, Metric)),
@@ -152,9 +172,17 @@ db_total(Ms) ->
 
 
 errors_total(Errors) ->
-    [{[{name, <<"Errors/all">>},
-       {scope, <<"">>}]},
-     [length(Errors), 0.0, 0.0, 0.0, 0.0, 0.0]].
+    Data = [length(Errors), 0.0, 0.0, 0.0, 0.0, 0.0],
+    [[{[{name, <<"Errors/all">>},
+        {scope, <<"">>}]},
+      Data],
+     [{[{name, <<"Errors/allWeb">>},
+        {scope, <<"">>}]},
+      Data],
+     [{[{name, <<"Instance/Reporting">>},
+        {scope, <<"">>}]},
+      Data]
+    ].
 
 
 pluck(_, _, []) ->
