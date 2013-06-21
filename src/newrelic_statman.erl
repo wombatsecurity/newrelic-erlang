@@ -109,8 +109,8 @@ transform_histogram(Metric) ->
                 {scope, <<"">>}]},
               Data]];
 
-        {{background, Scope}, Segment} when is_binary(Scope) ->
-            [[{[{name, to_bin(Segment)},
+        {{background, Scope}, {Class, Segment}} when is_binary(Scope) ->
+            [[{[{name, <<(class2bin(Class))/binary, "/", (to_bin(Segment))/binary>>},
                 {scope, bgscope2bin(Scope)}]},
              Data]];
 
