@@ -36,7 +36,8 @@ your keys, you can use New Relic "for free".
  * `{<<"/hello/world">>, {ext, <<"some.host.name">>}}` - External call
    inside a web transaction, will show up in the "Performance
    breakdown" and "External services"
- * `{foo, bar}` - Background task
+ * `{foo, bar}` - Background task - old format
+ * `{background, <<"foo">>}, {class, segment}}` - Background task segment.
+ * `{background, <<"foo">>}, total}` - Background task total time.
  * `{<<"/hello/world">>, {error, {type, message}}}` - Error, counters with keys
    like this will show up in under "Errors"
-

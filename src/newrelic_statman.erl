@@ -128,6 +128,16 @@ transform_histogram(Metric) ->
 
             ];
 
+        {{background, Scope}, total} when is_binary(Scope) ->
+            [[{[{name, bgscope2bin(Scope)},
+                {scope, <<"">>}]},
+              Data]];
+
+        {{background, Scope}, {Class, Segment}} when is_binary(Scope) ->
+            [[{[{name, <<(class2bin(Class))/binary, "/", (to_bin(Segment))/binary>>},
+                {scope, bgscope2bin(Scope)}]},
+             Data]];
+
         {Scope, {Class, Segment}} when is_binary(Scope) ->
             [[{[{name, <<(class2bin(Class))/binary, "/", (to_bin(Segment))/binary>>},
                 {scope, scope2bin(Scope)}]},
@@ -216,6 +226,9 @@ class2bin(Atom) when is_atom(Atom) ->
 
 to_bin(Atom) when is_atom(Atom) -> list_to_binary(atom_to_list(Atom));
 to_bin(Bin) when is_binary(Bin)-> Bin.
+
+bgscope2bin(Scope) ->
+    <<"OtherTransaction/Python/", Scope/binary>>.
 
 scope2bin(Url) when is_binary(Url) ->
     <<"WebTransaction/Uri", Url/binary>>.
