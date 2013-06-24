@@ -22,7 +22,7 @@ start_link(PollF) ->
 %%
 
 init([PollF]) ->
-    self() ! poll,
+    erlang:send_after(60000, self(), poll),
     {ok, #state{poll_fun = PollF}}.
 
 handle_call(_Request, _From, State) ->
