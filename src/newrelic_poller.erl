@@ -54,6 +54,9 @@ handle_info(poll, State) ->
             end
     end,
 
+    {noreply, State};
+
+handle_info(_, State) ->
     {noreply, State}.
 
 terminate(_Reason, _State) ->
