@@ -3,7 +3,10 @@
 
 poll() ->
     {ok, Metrics} = statman_aggregator:get_window(60),
+    transform_aggregated_metrics(Metrics).
 
+
+transform_aggregated_metrics(Metrics) ->
     Ms = lists:filter(
            fun (M) -> M =/= [] end,
            lists:foldl(fun (M, Acc) ->
