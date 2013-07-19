@@ -38,7 +38,7 @@ handle_info(poll, State) ->
     {ok, Hostname} = inet:gethostname(),
 
     case catch (State#state.poll_fun)() of
-        {'EXIT', {newrelic_disabled, _Reason}} ->
+        {[], []} ->
             ok;
         {'EXIT', Error} ->
             error_logger:warning_msg("newrelic_poller: polling failed: ~p~n", [Error]),
