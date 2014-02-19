@@ -2,28 +2,31 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1]).
+-export([start_link/1, start_link/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--record(state, {poll_fun}).
+-record(state, {poll_fun, error_cb}).
 
 %%
 %% API
 %%
 
 start_link(PollF) ->
-    gen_server:start_link(?MODULE, [PollF], []).
+    start_link(PollF, fun default_error_cb/2).
+
+start_link(PollF, ErrorCb) ->
+    gen_server:start_link(?MODULE, [PollF, ErrorCb], []).
 
 %%
 %% gen_server callbacks
 %%
 
-init([PollF]) ->
+init([PollF, ErrorCb]) ->
     erlang:send_after(60000, self(), poll),
-    {ok, #state{poll_fun = PollF}}.
+    {ok, #state{poll_fun = PollF, error_cb = ErrorCb}}.
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -41,17 +44,14 @@ handle_info(poll, State) ->
         {[], []} ->
             ok;
         {'EXIT', Error} ->
-            error_logger:warning_msg("newrelic_poller: polling failed: ~p~n", [Error]),
+            (State#state.error_cb)(poll_failed, Error),
             ok;
         {Metrics, Errors} ->
             case catch newrelic:push(Hostname, Metrics, Errors) of
                 ok ->
                     ok;
-                newrelic_down ->
-                    error_logger:warning_msg("newrelic_poller: newrelic is down~n");
-                Other ->
-                    error_logger:warning_msg("newrelic_poller: push failed: ~p~n",
-                                             [Other]),
+                Error ->
+                    (State#state.error_cb)(push_failed, Error),
                     ok
             end
     end,
@@ -70,3 +70,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% Internal functions
 %%
+
+default_error_cb(poll_failed, Error) ->
+    error_logger:warning_msg("newrelic_poller: polling failed: ~p~n", [Error]);
+default_error_cb(push_failed, Error) ->
+    error_logger:warning_msg("newrelic_poller: push failed: ~p~n", [Error]).
