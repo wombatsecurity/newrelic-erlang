@@ -5,8 +5,7 @@
   {registered, []},
   {applications, [
                   kernel,
-                  stdlib,
-                  statman
+                  stdlib
                  ]},
   {mod, {newrelic_app, []}},
   {env, []}
