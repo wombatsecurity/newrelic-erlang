@@ -1,5 +1,5 @@
 -module(newrelic_statman).
--compile([export_all]).
+-export([poll/0]).
 
 poll() ->
     {ok, Metrics} = statman_aggregator:get_window(60),
