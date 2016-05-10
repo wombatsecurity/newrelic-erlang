@@ -18,6 +18,8 @@ Two application environment variables must be set in the `newrelic` app:
  * `application_name`: human readable name of the app, will show up in the web interface
  * `license_key`: secret license key
 
+One application environment variable is optional:
+ * `high_security`: whether to send the high_security param in POST
 
 ## Statman integration
 
