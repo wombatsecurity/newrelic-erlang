@@ -6,7 +6,7 @@
 % Exported for testing
 -export([sample_data/0, sample_error_data/0]).
 
--define(BASE_URL, "http://~s/agent_listener/invoke_raw_method?").
+-define(BASE_URL, "https://~s/agent_listener/invoke_raw_method?").
 
 -define(l2b(L), list_to_binary(L)).
 -define(l2i(L), list_to_integer(L)).
@@ -57,6 +57,7 @@ connect(Collector, Hostname) ->
               {pid, ?l2i(os:getpid())},
               {environment, []},
               {language, <<"python">>},
+              {high_security, [high_security()]},
               {settings, {[]}}
              ]}],
 
@@ -129,7 +130,9 @@ license_key() ->
     {ok, Key} = application:get_env(newrelic, license_key),
     Key.
 
-
+high_security() ->
+    {ok, Key} = application:get_env(newrelic, high_security),
+    string::equal(Key, <<"true">>).
 
 request(Url) ->
     request(Url, <<"[]">>).
