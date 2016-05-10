@@ -131,8 +131,11 @@ license_key() ->
     Key.
 
 high_security() ->
-    {ok, Key} = application:get_env(newrelic, high_security),
-    string:equal(Key, <<"true">>).
+    Value = case application:get_env(newrelic, high_security) of
+      undefined   -> 'false';
+      {ok, V}     -> V
+    end.
+    string:equal(Value, <<"true">>).
 
 request(Url) ->
     request(Url, <<"[]">>).
