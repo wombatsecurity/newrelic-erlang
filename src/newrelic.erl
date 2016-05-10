@@ -132,7 +132,7 @@ license_key() ->
 
 high_security() ->
     {ok, Key} = application:get_env(newrelic, high_security),
-    string::equal(Key, <<"true">>).
+    string:equal(Key, <<"true">>).
 
 request(Url) ->
     request(Url, <<"[]">>).
