@@ -57,7 +57,7 @@ connect(Collector, Hostname) ->
               {pid, ?l2i(os:getpid())},
               {environment, []},
               {language, <<"python">>},
-              {high_security, [high_security()]},
+              {high_security, [true]},
               {settings, {[]}}
              ]}],
 
@@ -129,13 +129,6 @@ app_name() ->
 license_key() ->
     {ok, Key} = application:get_env(newrelic, license_key),
     Key.
-
-high_security() ->
-    Value = case application:get_env(newrelic, high_security) of
-      undefined   -> 'false';
-      {ok, V}     -> V
-    end.
-    string:equal(Value, <<"true">>).
 
 request(Url) ->
     request(Url, <<"[]">>).
