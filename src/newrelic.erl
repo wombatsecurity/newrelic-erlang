@@ -50,7 +50,7 @@ connect(Collector, Hostname) ->
     Url = url(Collector, [{method, connect}]),
 
     Data = [{[
-              {agent_version, <<"1.5.0.103">>},
+              {agent_version, <<"2.56.0.42">>},
               {app_name, [app_name()]},
               {host, ?l2b(Hostname)},
               {identifier, app_name()},
@@ -58,7 +58,10 @@ connect(Collector, Hostname) ->
               {environment, []},
               {language, <<"python">>},
               {high_security, [true]},
-              {settings, {[]}}
+              {settings, {[
+                {capture_params, [false]},
+                {<<"transaction_tracer.record_sql">>, <<"Off">>}
+              ]}}
              ]}],
 
     case request(Url, jiffy:encode(Data)) of
